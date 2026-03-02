@@ -1,0 +1,27 @@
+{
+  "name": "saad-web-experiments-frontend",
+  "version": "3.0.0",
+  "description": "Frontend for Saad Web Experiments portfolio",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["portfolio", "nextjs", "react"],
+  "author": "Muhammad Saad Amin",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,229 @@
+/* [project]/frontend/app/globals.css [app-client] (css) */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow: hidden scroll;
+}
+
+body {
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.toast-container {
+  z-index: 10000;
+  flex-direction: column;
+  gap: 10px;
+  display: flex;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+}
+
+.toast {
+  opacity: 0;
+  background: #fff;
+  border-radius: 8px;
+  align-items: center;
+  gap: 10px;
+  min-width: 250px;
+  padding: 12px 20px;
+  transition: all .3s;
+  display: flex;
+  transform: translateX(100%);
+  box-shadow: 0 4px 12px #00000026;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-success {
+  border-left: 4px solid #10b981;
+}
+
+.toast-error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast-info {
+  border-left: 4px solid #3b82f6;
+}
+
+body.dark .toast {
+  color: #f3f4f6;
+  background: #1f2937;
+}
+
+.bookmark-btn {
+  cursor: pointer;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 20px;
+  transition: all .2s;
+}
+
+.bookmark-btn:hover {
+  color: #f59e0b;
+  transform: scale(1.1);
+}
+
+.bookmark-btn.active {
+  color: #f59e0b;
+}
+
+.modal-overlay {
+  z-index: 10000;
+  background: #00000080;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  animation: .2s fadeIn;
+  display: flex;
+  position: fixed;
+  inset: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  flex-direction: column;
+  width: 100%;
+  max-width: 700px;
+  max-height: 80vh;
+  animation: .3s slideUp;
+  display: flex;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  border-bottom: 1px solid #e5e7eb;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  display: flex;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.modal-close {
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 28px;
+  transition: background .2s;
+  display: flex;
+}
+
+.modal-close:hover {
+  background: #f3f4f6;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.analytics-section {
+  margin-bottom: 24px;
+}
+
+.analytics-section h3 {
+  color: #1f2937;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.analytics-section p {
+  color: #6b7280;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.analytics-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.analytics-list li {
+  color: #374151;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+body.dark .modal-content {
+  color: #f3f4f6;
+  background: #1f2937;
+}
+
+body.dark .modal-header {
+  border-bottom-color: #374151;
+}
+
+body.dark .modal-close:hover {
+  background: #374151;
+}
+
+body.dark .analytics-section h3 {
+  color: #f3f4f6;
+}
+
+body.dark .analytics-section p {
+  color: #9ca3af;
+}
+
+body.dark .analytics-list li {
+  color: #e5e7eb;
+  background: #374151;
+}
+
+/*# sourceMappingURL=frontend_app_globals_c083601a.css.map*/

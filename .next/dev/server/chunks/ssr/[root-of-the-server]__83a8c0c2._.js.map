@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Web%20Development/Saad%20Web%20Experiments/frontend/app/page.tsx"],"sourcesContent":["export default function Home() {\n  // Redirect to the working index-enhanced.html\n  if (typeof window !== 'undefined') {\n    window.location.href = '/index-enhanced.html';\n  }\n\n  return (\n    <div style={{ padding: '2rem', textAlign: 'center' }}>\n      <h1>Redirecting to portfolio...</h1>\n      <p>If you are not redirected, <a href=\"/index-enhanced.html\">click here</a>.</p>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,8CAA8C;IAC9C;;IAIA,qBACE,8OAAC;QAAI,OAAO;YAAE,SAAS;YAAQ,WAAW;QAAS;;0BACjD,8OAAC;0BAAG;;;;;;0BACJ,8OAAC;;oBAAE;kCAA2B,8OAAC;wBAAE,MAAK;kCAAuB;;;;;;oBAAc;;;;;;;;;;;;;AAGjF"}}]
+}
