@@ -50,6 +50,24 @@ export default function Home() {
           <button className="filter-btn" data-filter="React">⚛️ React</button>
         </div>
 
+        <div className="controls-row">
+          <label className="sort-control" htmlFor="sort-select">
+            Sort:
+            <select id="sort-select" defaultValue="title-asc">
+              <option value="title-asc">Title (A-Z)</option>
+              <option value="title-desc">Title (Z-A)</option>
+              <option value="most-viewed">Most Viewed</option>
+              <option value="latest-bookmark">Latest Bookmarked</option>
+            </select>
+          </label>
+          <div className="utility-actions">
+            <button id="bookmark-view-toggle" className="utility-btn" type="button">⭐ Bookmarks Only: Off</button>
+            <button id="random-project-btn" className="utility-btn" type="button">🎲 Random Project</button>
+            <button id="export-bookmarks-btn" className="utility-btn" type="button">⬇ Export Bookmarks</button>
+            <button id="clear-analytics-btn" className="utility-btn danger" type="button">🧹 Clear Analytics</button>
+          </div>
+        </div>
+
         <div className="results-meta" id="results-meta"></div>
         <div id="project-container" className="grid"></div>
       </main>
@@ -67,7 +85,7 @@ export default function Home() {
       <Script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js" strategy="afterInteractive" />
       <Script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js" strategy="afterInteractive" />
 
-      <Script id="theme-toggle" strategy="afterInteractive">{`
+      <Script id="theme-script" strategy="afterInteractive">{`
         const toggleBtn = document.getElementById("theme-toggle");
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         if (localStorage.theme === "dark" || (!localStorage.theme && prefersDark)) {
@@ -142,6 +160,8 @@ export default function Home() {
           }
         };
 
+        const getProjectId = (project) => \`\${project.category}-\${project.title.replace(/\\s+/g, '-')}\`;
+
         const Bookmarks = {
           add(projectId, projectTitle) {
             const bookmarks = Storage.get('bookmarks', []);
@@ -162,31 +182,15 @@ export default function Home() {
           has(projectId) {
             const bookmarks = Storage.get('bookmarks', []);
             return bookmarks.some(b => b.id === projectId);
+          },
+          getMap() {
+            const bookmarks = Storage.get('bookmarks', []);
+            return bookmarks.reduce((acc, item) => {
+              acc[item.id] = item;
+              return acc;
+            }, {});
           }
         };
-
-        document.addEventListener('keydown', (e) => {
-          if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
-            e.preventDefault();
-            document.getElementById('search-input').focus();
-          }
-          if (e.key === 'Escape') {
-            const searchInput = document.getElementById('search-input');
-            if (searchInput.value) {
-              searchInput.value = '';
-              searchInput.dispatchEvent(new Event('input'));
-            }
-          }
-          if (e.ctrlKey && e.key === 'd') {
-            e.preventDefault();
-            document.getElementById('theme-toggle').click();
-          }
-          // Show analytics with Ctrl+Shift+A
-          if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-            e.preventDefault();
-            showAnalytics();
-          }
-        });
 
         function showAnalytics() {
           const analytics = Storage.get('analytics', { events: [], views: {}, searches: [] });
@@ -203,7 +207,7 @@ export default function Home() {
               <div class="modal-body">
                 <div class="analytics-section">
                   <h3>📈 Project Views</h3>
-                  <p>Total views: \${Object.keys(analytics.views).length} projects</p>
+                  <p>Total viewed projects: \${Object.keys(analytics.views).length}</p>
                   <ul class="analytics-list">
                     \${Object.entries(analytics.views)
                       .sort((a, b) => b[1] - a[1])
@@ -246,24 +250,112 @@ export default function Home() {
           });
         }
 
+        function exportBookmarks() {
+          const bookmarks = Storage.get('bookmarks', []);
+          if (!bookmarks.length) {
+            Toast.info('No bookmarks to export');
+            return;
+          }
+
+          const blob = new Blob([JSON.stringify(bookmarks, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'saad-bookmarks.json';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          Toast.success('Bookmarks exported');
+        }
+
+        function clearAnalytics() {
+          const analytics = Storage.get('analytics', { events: [], views: {}, searches: [] });
+          if (!analytics.events.length) {
+            Toast.info('Analytics already empty');
+            return;
+          }
+          Storage.set('analytics', { events: [], views: {}, searches: [] });
+          Toast.success('Analytics cleared');
+        }
+
         // Make analytics accessible from console
         window.showAnalytics = showAnalytics;
         window.getAnalytics = () => Storage.get('analytics', { events: [], views: {}, searches: [] });
-        console.log('💡 Tip: Type showAnalytics() or press Ctrl+Shift+A to view analytics');
-        console.log('💡 Tip: Type getAnalytics() to get raw analytics data');
+        console.log('Tip: Press Ctrl+Shift+A to view analytics dashboard');
 
         const langMap = { html: 'markup', css: 'css', javascript: 'javascript', python: 'python', jsx: 'jsx' };
         const categoryColors = { HTML: '#e34c26', CSS: '#264de4', JavaScript: '#f7df1e', Python: '#3572A5', React: '#61dafb' };
         const categoryTextColors = { HTML: '#fff', CSS: '#fff', JavaScript: '#333', Python: '#fff', React: '#111' };
+        const categories = ['HTML', 'CSS', 'JavaScript', 'Python', 'React'];
+
         let activeFilter = 'All';
         let searchQuery = '';
+        let sortMode = 'title-asc';
+        let bookmarksOnly = false;
+
+        const container = document.getElementById('project-container');
+        const resultsMeta = document.getElementById('results-meta');
+        const sortSelect = document.getElementById('sort-select');
+        const bookmarkViewToggle = document.getElementById('bookmark-view-toggle');
+        const randomProjectBtn = document.getElementById('random-project-btn');
+        const exportBookmarksBtn = document.getElementById('export-bookmarks-btn');
+        const clearAnalyticsBtn = document.getElementById('clear-analytics-btn');
+        const searchInput = document.getElementById('search-input');
+
+        function getFilteredProjects() {
+          const bookmarksMap = Bookmarks.getMap();
+          return window.projects.filter(p => {
+            const projectId = getProjectId(p);
+            const matchCat = activeFilter === 'All' || p.category === activeFilter;
+            const matchSearch = !searchQuery
+              || p.title.toLowerCase().includes(searchQuery)
+              || p.category.toLowerCase().includes(searchQuery)
+              || (p.description && p.description.toLowerCase().includes(searchQuery));
+            const matchBookmark = !bookmarksOnly || !!bookmarksMap[projectId];
+            return matchCat && matchSearch && matchBookmark;
+          });
+        }
+
+        function sortProjects(projects) {
+          const analytics = Storage.get('analytics', { events: [], views: {}, searches: [] });
+          const bookmarksMap = Bookmarks.getMap();
+
+          const sorted = [...projects];
+          if (sortMode === 'title-asc') {
+            sorted.sort((a, b) => a.title.localeCompare(b.title));
+          } else if (sortMode === 'title-desc') {
+            sorted.sort((a, b) => b.title.localeCompare(a.title));
+          } else if (sortMode === 'most-viewed') {
+            sorted.sort((a, b) => {
+              const aViews = analytics.views[getProjectId(a)] || 0;
+              const bViews = analytics.views[getProjectId(b)] || 0;
+              return bViews - aViews || a.title.localeCompare(b.title);
+            });
+          } else if (sortMode === 'latest-bookmark') {
+            sorted.sort((a, b) => {
+              const aTime = bookmarksMap[getProjectId(a)]?.timestamp || 0;
+              const bTime = bookmarksMap[getProjectId(b)]?.timestamp || 0;
+              return bTime - aTime || a.title.localeCompare(b.title);
+            });
+          }
+
+          return sorted;
+        }
+
+        function updateControlsUI() {
+          bookmarkViewToggle.textContent = \`⭐ Bookmarks Only: \${bookmarksOnly ? 'On' : 'Off'}\`;
+          bookmarkViewToggle.classList.toggle('active', bookmarksOnly);
+        }
 
         function buildCard(project) {
           const { title, category, description, iframeSrc, codeFiles } = project;
           const hasPreview = !!iframeSrc;
-          const projectId = \`\${category}-\${title.replace(/\\s+/g, '-')}\`;
+          const projectId = getProjectId(project);
           const card = document.createElement('article');
           card.className = 'card';
+          card.dataset.projectId = projectId;
+
           const details = document.createElement('details');
           const summary = document.createElement('summary');
           const catColor = categoryColors[category] || '#1282A2';
@@ -294,6 +386,9 @@ export default function Home() {
               Bookmarks.add(projectId, title);
               bookmarkBtn.classList.add('active');
               bookmarkBtn.textContent = '★';
+            }
+            if (bookmarksOnly || sortMode === 'latest-bookmark') {
+              renderProjects();
             }
           });
 
@@ -342,7 +437,6 @@ export default function Home() {
           const codePanel = document.createElement('div');
           codePanel.className = \`panel panel-code\${hasPreview ? '' : ' active'}\`;
 
-          // File tabs for multi-file projects
           if (codeFiles && codeFiles.length > 1) {
             const fileTabs = document.createElement('div');
             fileTabs.className = 'file-tabs';
@@ -363,6 +457,7 @@ export default function Home() {
             <div class="ide-actions"><button class="copy-btn">⧉ Copy</button></div>
           \`;
           codePanel.appendChild(toolbar);
+
           const pre = document.createElement('pre');
           pre.className = 'ide-pre';
           const code = document.createElement('code');
@@ -409,7 +504,6 @@ export default function Home() {
             }
           });
 
-          // File tab switching
           const fileTabBtns = codePanel.querySelectorAll('.file-tab-btn');
           fileTabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -445,28 +539,33 @@ export default function Home() {
           return card;
         }
 
-        const container = document.getElementById('project-container');
-        const resultsMeta = document.getElementById('results-meta');
-        const categories = ['HTML', 'CSS', 'JavaScript', 'Python', 'React'];
-
         function renderProjects() {
           container.innerHTML = '';
           if (!window.projects || !window.projects.length) {
             container.innerHTML = '<div class="empty-state">⚠️ No projects found.</div>';
-            return;
+            return [];
           }
 
-          let filtered = window.projects.filter(p => {
-            const matchCat = activeFilter === 'All' || p.category === activeFilter;
-            const matchSearch = !searchQuery || p.title.toLowerCase().includes(searchQuery) || p.category.toLowerCase().includes(searchQuery) || (p.description && p.description.toLowerCase().includes(searchQuery));
-            return matchCat && matchSearch;
-          });
+          let filtered = getFilteredProjects();
+          filtered = sortProjects(filtered);
 
-          resultsMeta.textContent = \`Showing \${filtered.length} project\${filtered.length !== 1 ? 's' : ''}\`;
+          resultsMeta.textContent = \`Showing \${filtered.length} project\${filtered.length !== 1 ? 's' : ''} • Sort: \${sortSelect.options[sortSelect.selectedIndex].text}\${bookmarksOnly ? ' • Bookmarks only' : ''}\`;
 
           if (filtered.length === 0) {
             container.innerHTML = '<div class="empty-state">No projects found.</div>';
-            return;
+            return filtered;
+          }
+
+          if (sortMode === 'most-viewed' || sortMode === 'latest-bookmark') {
+            const section = document.createElement('section');
+            section.className = 'category';
+            section.innerHTML = \`<h2 class="cat-heading">All Matching Projects <span class="cat-count">\${filtered.length}</span></h2>\`;
+            const cards = document.createElement('div');
+            cards.className = 'cards';
+            filtered.forEach(p => cards.appendChild(buildCard(p)));
+            section.appendChild(cards);
+            container.appendChild(section);
+            return filtered;
           }
 
           const groups = {};
@@ -495,6 +594,26 @@ export default function Home() {
             section.appendChild(cards);
             container.appendChild(section);
           });
+
+          return filtered;
+        }
+
+        function openRandomProject() {
+          const filtered = getFilteredProjects();
+          if (!filtered.length) {
+            Toast.info('No matching projects available');
+            return;
+          }
+
+          const randomProject = filtered[Math.floor(Math.random() * filtered.length)];
+          const projectId = getProjectId(randomProject);
+          renderProjects();
+
+          const card = container.querySelector(\`[data-project-id="\${projectId}"] details\`);
+          if (!card) return;
+          card.open = true;
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          Toast.success(\`Opened: \${randomProject.title}\`);
         }
 
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -507,13 +626,64 @@ export default function Home() {
           });
         });
 
-        document.getElementById('search-input').addEventListener('input', (e) => {
+        sortSelect.addEventListener('change', () => {
+          sortMode = sortSelect.value;
+          Analytics.track('sort', { mode: sortMode });
+          renderProjects();
+        });
+
+        bookmarkViewToggle.addEventListener('click', () => {
+          bookmarksOnly = !bookmarksOnly;
+          updateControlsUI();
+          Analytics.track('bookmark_filter', { active: bookmarksOnly });
+          renderProjects();
+        });
+
+        randomProjectBtn.addEventListener('click', openRandomProject);
+        exportBookmarksBtn.addEventListener('click', exportBookmarks);
+        clearAnalyticsBtn.addEventListener('click', () => {
+          clearAnalytics();
+          renderProjects();
+        });
+
+        searchInput.addEventListener('input', (e) => {
           searchQuery = e.target.value.toLowerCase().trim();
           if (searchQuery) {
             Analytics.track('search', { query: searchQuery });
           }
           renderProjects();
         });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            searchInput.focus();
+          }
+          if (e.key === 'Escape') {
+            if (searchInput.value) {
+              searchInput.value = '';
+              searchInput.dispatchEvent(new Event('input'));
+            }
+          }
+          if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            document.getElementById('theme-toggle').click();
+          }
+          if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+            e.preventDefault();
+            showAnalytics();
+          }
+          if (e.key.toLowerCase() === 'b' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            bookmarkViewToggle.click();
+          }
+          if (e.key.toLowerCase() === 'r' && document.activeElement.tagName !== 'INPUT') {
+            e.preventDefault();
+            openRandomProject();
+          }
+        });
+
+        updateControlsUI();
 
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', renderProjects);

@@ -180,6 +180,67 @@ body {
   font-size: 15px;
 }
 
+.controls-row {
+  margin: 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.sort-control select {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--blue-900);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.utility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.utility-btn {
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--blue-800);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.utility-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--blue-500);
+  background: rgba(46, 163, 214, 0.08);
+}
+
+.utility-btn.active {
+  color: white;
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-500));
+  border-color: transparent;
+}
+
+.utility-btn.danger {
+  color: #b45309;
+}
+
 .results-meta {
   text-align: center;
   font-size: 13px;
@@ -578,6 +639,21 @@ body.dark .filter-btn:hover {
   background: rgba(46, 163, 214, 0.15);
 }
 
+body.dark .sort-control select,
+body.dark .utility-btn {
+  background: #0f1b33;
+  color: #cfe8ff;
+  border-color: #1f2a44;
+}
+
+body.dark .utility-btn:hover {
+  background: rgba(116, 192, 227, 0.12);
+}
+
+body.dark .utility-btn.danger {
+  color: #fdba74;
+}
+
 body.dark .cat-heading {
   color: #cfe8ff;
 }
@@ -737,6 +813,29 @@ svg {
     white-space: nowrap;
     font-size: 0.85rem;
     padding: 0.5rem 0.75rem;
+  }
+
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sort-control {
+    justify-content: center;
+  }
+
+  .sort-control select {
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .utility-actions {
+    width: 100%;
+  }
+
+  .utility-btn {
+    width: 100%;
+    max-width: 320px;
   }
 
   /* Cards grid */
