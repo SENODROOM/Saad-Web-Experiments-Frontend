@@ -1,47 +1,60 @@
-import mongoose from 'mongoose';
+/**
+ * frontend/src/lib/mongodb.ts
+ *
+ * ⚠️  THIS FILE DOES NOT CONNECT TO MONGODB.
+ *
+ * The actual MongoDB connection lives exclusively in:
+ *   backend/src/lib/mongodb.js
+ *
+ * This file exists only to provide a typed API client for
+ * Next.js API routes that optionally proxy requests to the
+ * Express backend. All database logic runs server-side in
+ * the backend package.
+ *
+ * If NEXT_PUBLIC_API_URL is not set, the frontend falls back
+ * to localStorage for bookmarks and analytics — no backend
+ * or database connection is needed.
+ */
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? null;
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+/**
+ * Returns true when the optional Express backend is configured.
+ */
+export function isBackendEnabled(): boolean {
+  return Boolean(API_URL);
 }
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-}
-
-declare global {
-  var mongoose: MongooseCache;
-}
-
-let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
-
-if (!global.mongoose) {
-  global.mongoose = cached;
-}
-
-async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+/**
+ * Base fetch helper for backend API calls.
+ * Throws if NEXT_PUBLIC_API_URL is not configured.
+ */
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+  sessionId?: string
+): Promise<T> {
+  if (!API_URL) {
+    throw new Error(
+      "Backend is not configured. Set NEXT_PUBLIC_API_URL in frontend/.env.local"
+    );
   }
 
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(sessionId ? { "x-session-id": sessionId } : {}),
+    ...options.headers,
+  };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts);
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API error ${response.status}: ${error}`);
   }
 
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
-
-  return cached.conn;
+  return response.json() as Promise<T>;
 }
-
-export default connectDB;
